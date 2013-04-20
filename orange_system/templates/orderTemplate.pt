@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html>
+  
+  <head>
+    <title>MainPage</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+    
+    <link rel="stylesheet" href="${request.static_url('orange_system:static/bootstrap_css/bootstrap.css')}"/>
+    <link rel="stylesheet" href="${request.static_url('orange_system:static/bootstrap_css/bootstrap-responsive.css')}"/>
+    
+    <script src="${request.static_url('orange_system:static/js/bootstrap.min.js')}"></script>
+    <script src="http://code.jquery.com/jquery-1.9.1.js"></script>
+    
+    <script>
+	  function toggleControl(control, state){
+		document.getElementById(control).disabled = state;
+	  }
+	  
+	  $(function(){
+		
+		$("form#addOrderForm").submit(function(){
+		  // here we will manually set some variables to the values inside each textbox on the form
+		  var custID = $("input#custID").val();
+		  var modelName = $("input#addmodel").val();
+		  var orderNotes = $("textarea#addnotes").val();
+		  var progressDescription = $("select#addstatus").val();
+		  var entryDate = new Date();
+		  
+		  // now we will create an AJAX call to post to addOrder_view
+		  $.post("${request.route_url('addOrder')}",
+           {"custID": custID,
+            "modelName": modelName,
+            "orderNotes": orderNotes,
+            "entryDate": entryDate,
+            "progressDescription": progressDescription
+           }).success(function(){
+		  // if the post was successful we will now allow the user to add services and parts
+		  toggleControl('model', true);
+		  toggleControl('notes', true);
+		  toggleControl('progress', true);
+		  alert("Order added successfully!");
+	      });
+		});
+		
+		$("form#updateOrderForm").submit(function(){
+		  var orderID = $("input#orderID").val();
+		  var custID = $("input#custID").val();
+		  var modelName = $("input#modelName").val();
+          var orderNotes = $("textarea#orderNotes").val();
+          var orderCost = $("input#orderCost").val();
+          var entryDate = $("input#entryDate").val();
+          var completionDate = $("input#completionDate").val();
+		  var progressDescription = $("select#progressDescription").val();
+		      
+          $.post("${request.route_url('updateOrder')}",
+          { "orderID": orderID,
+			"custID": custID,
+			"modelName": modelName,
+			"orderNotes": orderNotes,
+			"orderCost": orderCost,
+			"entryDate": entryDate,
+			"completionDate": completionDate,
+			"progressDescription": progressDescription }).success(function(){alert("Order information saved!");
+		  });
+	    });
+	  });
+    </script>
+    
+    
+    <!-- this bit of code controls the DELETE for orders -->
+    <script>
+        $(document).ready(function(){
+          $("form > button").each(function(){
+              if ($(this).attr('id') == 'deleteOrder') {
+              $(this).click(function()
+              {
+                var formData = $("#form"+$(this).attr('name')).serializeArray();
+                if(confirm('Are you sure you want to delete this Order?')){
+                $.post("${request.route_url('deleteOrder')}",
+                { "formData": formData }
+                ).success(function() {
+                 alert("Deleted Order");
+                });
+                }
+                return false;
+              });
+            }
+          });
+        }); 
+         
+     </script>
+    
+  </head>
+  
+  <body>
+    <div class="navbar-inverse navbar">
+      <div class="navbar-inner">
+        <div class="container">
+          <div class="navbar-content">
+            <ul class="nav">
+              <li>
+                <a href="${request.route_url('home')}">Home</a> 
+              </li>
+              <li>
+                <a href="${request.route_url('search')}">Search</a> 
+              </li>
+              <li>
+                <a href="${request.route_url('customer')}">Customers</a> 
+              </li>
+              <li class="active">
+                <a href="${request.route_url('order')}">Orders #!</a> 
+              </li>
+              <li>
+                <a href="${request.route_url('service')}">Services</a> 
+              </li>
+              <li>
+                <a href="${request.route_url('part')}">Parts</a> 
+              </li>
+              <li>
+                <a href="${request.route_url('report')}">Reports</a> 
+              </li>
+              <li>
+                <a href="${request.route_url('todo')}">To-Do</a> 
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="container-fluid">
+      <div class="span3">
+        <div class="well">
+		  <h2>Order Details</h2>
+		  <br>
+		  
+		  <!-- Keep in mind only one of these forms (Add / Update) will be visible at a time.
+			   Their visibility is dependant on whether an order Id was passed
+			   to the page or not.
+		  -->
+		  
+		  <!-- ADD CUSTOMER -->
+		  <form method="POST" id="addOrderForm" name="addOrderForm" action="${request.route_url('order')}" tal:condition="not order">
+            <input id="custID" name="custID" type="text" class="input-medium" placeholder="CustID testing!" required>
+		    <br>
+            <label><b>Model</b></label>
+            <input id="addmodel" name="addmodel" type="text" class="input-medium" placeholder="Model Name" required>
+            <br>
+            <label><b>Notes</b></label>
+            <textarea id="addnotes" name="addnotes" placeholder="Enter notes here" required></textarea>
+            <br>
+            <label><b>Status</b></label>
+            <select id="addstatus" name="addstatus" required>
+			  <option tal:repeat="row progress" value="${row.progressDescription}" name="progressDescription">${row.progressDescription}</option>
+            </select>
+            <br>
+            <br>
+            <button type="submit" id="btnAdd" name="btnAdd" class="btn btn-primary">Add Order</button>
+          </form>
+          
+          <!-- UPDATE CUSTOMER -->
+          <form method="POST" id="updateOrderForm" name="updateOrder" action="${request.route_url('order')}" tal:condition="order">
+		    <label><b>Order ID</b></label>
+		    <input id="orderID" name="orderID" type="text" class="input-medium" value="${order.orderID}" disabled>
+		    <br>
+		    <label><b>Customer ID</b></label>
+		    <input id="custID" name="custID" type="text" class="input-medium" value="${order.custID}" disabled>
+		    <br>
+            <label><b>Model</b></label>
+            <input id="modelName" name="modelName" type="text" class="input-medium" value="${order.modelName}">
+            <br>
+            <label><b>Notes</b></label>
+            <textarea id="orderNotes" name="orderNotes">${order.orderNotes}</textarea>
+            <br>
+            <label><b>Cost</b></label>
+            <input id="orderCost" name="orderCost" type="text" class="input-medium" value="${order.orderCost}"></input>
+            <br>
+            <label><b>Entry Date</b></label>
+            <input id="entryDate" name="entryDate" type="text" class="input-medium" value="${order.entryDate}"></input disabled>
+            <br>
+            <label><b>Completion Date</b></label>
+            <input id="completionDate" name="completionDate" type="text" class="input-medium" value="${order.completionDate}"></input disabled>
+            <br>
+            <label><b>Status</b></label>
+            <select id="progressDescription" name="progressDescription">
+			  <option tal:repeat="row progress" value="${row.progressDescription}" name="progressDescription">${row.progressDescription}</option>
+            </select>
+            <br>
+            <br>
+            <button type="submit" id="btnUpdate" name="btnUpdate" class="btn btn-primary">Update Order</button>
+          </form>
+        </div>
+      </div>
+    
+      <div class="container">
+        <div class="span4">
+          <div class="well">
+            <label><h4>Services</h4></label>
+            <select id="serviceselect" name="serviceselect">
+              <option tal:repeat="row services">${row.serviceName}</option>
+            </select>
+            <button onclick="addService()"><b>+</b></button>
+            <br>
+            <h5>Current</h5>
+            <table class="table table-striped">
+              <tr>
+                <th>Service Name</th>
+                <th>Service Cost</th>
+              </tr>
+              <tr tal:repeat="row orderServicesFull">
+                <td>${row.serviceName}</td>
+                <td>${row.serviceCost}</td>
+              </tr>
+            </table>
+          </div>
+        </div>
+      
+        <div class="span4">
+          <div class="well">
+            <label><h4>Parts</h4></label>
+            <select id="partselect" name="partselect">
+              <option tal:repeat="row parts">${row.partName}</option>
+            </select>
+            <button onclick="addPart()"><b>+</b></button>
+            <br>
+            <h5>Current</h5>
+            <table class="table table-striped">
+              <tr>
+                <th>Part Name</th>
+                <th>Part Cost</th>
+              </tr>
+              <tr tal:repeat="row orderPartsFull">
+                <td>${row.partName}</td>
+                <td>${row.partCost}</td>
+              </tr>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="container">
+      <div class="span4">
+        <div class="well">
+          Service Total: $
+        </div>
+      </div>
+      <div class="span4">
+        <div class="well">
+          Parts Total: $
+        </div>
+      </div>
+      
+    </div>
+  
+  
+	<!-- ORDER LIST (bottom of page) -->
+    <div class="container-fluid">
+      <div class="well">
+		<h2>Orders List</h2>
+		<div tal:condition="orders" class="container-fluid">
+		  <ul class="nav nav-pills">
+		    <li>
+			  <b><a class="span1">Order ID</a> </b>
+		    </li>
+		    <li>
+			  <b><a class="span2">Model Name</a> </b>
+		    </li>
+		    <li>
+			  <b><a class="span2">Notes</a> </b>
+		    </li>
+		    <li>
+			  <b><a class="span2">Cost</a> </b>
+		    </li>
+		    <li>
+			  <b><a class="span2">Progress</a> </b>
+		    </li>
+		  </ul>
+		  <hr>
+			<form type="GET" action="${request.route_url('order')}" tal:repeat="row orders" id="form${row.orderID}">
+			  <!--This loop makes a form for each order and prints plain text for the ID, as well as a hidden input for the submit handler-->
+			  <span class="span1">${row.orderID}<input type="hidden" value="${row.orderID}" name="orderID"> </span>
+			  <span class="span2">${row.modelName}</span>
+			  <span class="span2">${row.orderNotes}</span>
+			  <span class="span2">${row.orderCost}</span>
+			  <span class="span2">${row.progressDescription}</span>
+			  <button class="btn btn-info" type="submit">Edit</button> 
+			  <button class="btn btn-danger" id="deleteOrder" name="${row.orderID}">Delete</button> <br>
+			</form>
+		  </hr>
+		</div>
+	  </div>
+	</div>
+    
+  </body>
+</html>

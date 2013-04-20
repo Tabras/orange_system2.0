@@ -1,0 +1,5 @@
+      [paste.app_factory]
+      main = orange_system:main
+      [console_scripts]
+      initialize_orange_system_db = orange_system.scripts.initializedb:main
+      

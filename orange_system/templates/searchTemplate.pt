@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+  
+  <head>
+    <title>Search</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+    
+    <link rel="stylesheet" href="${request.static_url('orange_system:static/bootstrap_css/bootstrap.css')}"/>
+    <link rel="stylesheet" href="${request.static_url('orange_system:static/bootstrap_css/bootstrap-responsive.css')}"/>
+    
+    <script src="http://code.jquery.com/jquery-1.9.1.js">
+     </script>
+    <script src="${request.static_url('orange_system:static/js/bootstrap.min.js')}"></script>
+     <script>
+        $(document).ready(function(){
+         
+          $("#q").blur(function(){
+             $('#myForm').submit();
+           });
+          $("form > button").each(function(){
+              if ($(this).attr('id') == 'deleteCust') {
+              $(this).click(function()
+              {
+                var formData = $("#form"+$(this).attr('name')).serializeArray();
+                if(confirm('Are you sure you want to delete this customer?')){
+                $.post("${request.route_url('deleteCust')}",
+                { "formData": formData }
+                ).success(function() {
+                 alert("Deleted customer");
+                });
+                }
+                return false;
+              });
+            }
+          });
+        }); 
+         
+     </script>
+  </head>
+  
+  <body>
+    <div class="navbar-inverse navbar">
+      <div class="navbar-inner">
+        <div class="container">
+          <div class="navbar-content">
+            <ul class="nav">
+              <li>
+                <a href="${request.route_url('home')}">Home</a> 
+              </li>
+              <li class="active">
+                <a href="${request.route_url('search')}">Search #!</a> 
+              </li>
+              <li>
+                <a href="${request.route_url('customer')}">Customers</a> 
+              </li>
+              <li>
+                <a href="${request.route_url('order')}">Orders</a> 
+              </li>
+              <li>
+                <a href="${request.route_url('service')}">Services</a> 
+              </li>
+              <li>
+                <a href="${request.route_url('part')}">Parts</a> 
+              </li>
+              <li>
+                <a href="${request.route_url('report')}">Reports</a> 
+              </li>
+              <li>
+                <a href="${request.route_url('todo')}">To-Do</a> 
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="well">
+	  <div class="container-fluid">
+		<label style="font-size:26px;"><b>Customer Search</b></label>
+        <form method="GET" id="myForm" class="well form-search">
+          <div class="input-append">
+          <input id="q" name="q" type="text" class="input-large search-query" placeholder="Enter your search here #!">
+          <button type="submit" value="Submit #!" class="btn" id="searchBtn">
+          <i class="icon-search"></i></button>
+          </div>
+        </form>
+                
+                
+        <div tal:condition="result" class="container-fluid">
+          <ul class="nav nav-pills">
+			<li>
+				<b><a class="span1">Customer ID</a> </b>
+			</li>
+			<li>
+				<b><a class="span2">Name</a> </b>
+			</li>
+			<li>
+				<b><a class="span2">Address</a> </b>
+			</li>
+			<li>
+				<b><a class="span2">Email Addresses</a> </b>
+			</li>
+			<li>
+				<b><a class="span2 offset1">Phone Number</a> </b>
+			</li>
+		  </ul>
+		  <hr>
+		  <form type="GET" action="${request.route_url('customer')}" tal:repeat="row result" id="form${row['customerID']}">
+		    <!--! A bit of a hack here.  this loop makes a form for each customer which prints a plain text for the ID, as well as a hidden input for the submit handler 
+				Probably not the smoothest way to handle this, but it works gosh darn it!-->
+			<span class="span1">${row['customerID']}<input type="hidden" value="${row['customerID']}" name="customerID"> </span>
+			<span class="span2">${row['firstName']} ${row['lastName']} </span>
+			<span class="span2">${row['address']} ${row['city']}, ${row['stateCode']} ${row['zipCode']}</span>
+		    <span><textarea class="span3" disabled>${row['emails']}</textarea></span>
+			<span><textarea class="span3" disabled>${row['Phone Number']}</textarea></span>
+			<button class="btn btn-info" type="submit">Edit</button> 
+            <button class="btn btn-danger" id="deleteCust" name="${row['customerID']}">Delete</button> <br>
+		  </form>
+		  </hr>
+        </div>
+            
+      </div>
+    </div>
+  </body>
+</html>
